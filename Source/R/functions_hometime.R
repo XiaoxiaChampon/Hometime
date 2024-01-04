@@ -156,9 +156,9 @@ home_time_regressions = function(home_time_data) {
     p6 <- pval < 0.05
     ################################################
     #linear regression, cox, median, nb, possion, temporal process
-    param.est <- c(co1, co2new, co3, co4, co5, co6)
-    names(param.est)=c("lr","cox","median","nb","poission","tp")
-    power<- c(p1, p2new, p3, p4, p5, p6)
-    names(power)=c("lr","cox","median","nb","poission","tp")
+    param.est <- c(co1,  co3, co5,co4, co2new, co6)
+    names(param.est)=c("lr","median","poission","nb","cox","tp")
+    power<- c(p1,  p3, p5, p4,p2new, p6)
+    names(power)=c("lr","median","poission","nb","cox","tp")
     return(list("param.est "=param.est ,"power"=power))
 }
