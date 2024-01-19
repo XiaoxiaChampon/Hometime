@@ -26,7 +26,7 @@
 
 
 ##############################################################
-
+#setwd("~/Documents/GitHub/Hometime/Source/R")
 # load required libraries
 library(MASS)
 library(survival)
@@ -82,7 +82,7 @@ if(run_parallel)
 #Output: 3D array, n*5*B, n is the number of observation, 
 #5 is the column of the data (outcome, group, outcome.t , outcome.b, event), 
 #B is the number of replications
-generate_home_time_scenario = function(B, n, censor, effect, effect.d, equalsize,diff_censor,censorbig) {
+generate_home_time_scenario = function(B, n, censor, effect,  equalsize,diff_censor,censorbig) {
    # B=3
    # n=1000
    # censor=1
@@ -90,7 +90,7 @@ generate_home_time_scenario = function(B, n, censor, effect, effect.d, equalsize
    # effect.d=0
    # equalsize=0
    # diff_censor=1
-    
+  
     home_time_data=array(0,c(n,4,B))
     #same censoring rate
     if (censor==0 && diff_censor==0){censor_p=c(0)}
@@ -126,7 +126,7 @@ generate_home_time_scenario = function(B, n, censor, effect, effect.d, equalsize
                     prev.dead <- dead
                 }
                 
-                lin <- -7 + .00015 * t + frailty - effect.d * (t < 14) * trt
+                lin <- -7 + .00015 * t + frailty - effect * (t < 14) * trt
                 #' *The probability of the death from the linear predictor*
                 p.d <- exp(lin) / (1 + exp(lin))
                 dead <- ((rbinom(n, 1, p.d) + prev.dead) > 0)
@@ -170,7 +170,7 @@ generate_home_time_scenario = function(B, n, censor, effect, effect.d, equalsize
                     prev.dead <- dead
                 }
                 
-                lin <- -7 + .00015 * t + frailty - effect.d * (t < 14) * trt
+                lin <- -7 + .00015 * t + frailty - effect * (t < 14) * trt
                 p.d <- exp(lin) / (1 + exp(lin))
                 
                 dead <- ((rbinom(n, 1, p.d) + prev.dead) > 0)
@@ -324,7 +324,7 @@ home_time_simulation_results=function(home_time_scenario_data){
     a.powerse<- sqrt((a.power*(1-a.power))/num_replica)
     result <- cbind(a.param, a.paramsd, a.power, a.powerse)
   
-    rownames(result) <- c("lin", "cox", "med", "nb", "poi", "temp")
+    rownames(result) <- c("lin",  "med",  "poi","nb","cox", "temp")
  
     colnames(result) <-c("est", "se", "power","powerse")
     return(result)
@@ -341,8 +341,8 @@ home_time_simulation_results=function(home_time_scenario_data){
 #effect.d: scalar, effect of treatment on death, usually 0 means no effect of death, 1 means has some effect
 
 #Output: 6 rows (one per model), 3 columns (parameter, standard error, p-value)
-home_time_table=function(B, n, censor, effect, effect.d, equalsize,diff_censor,censorbig=1){
-    home_time_data=generate_home_time_scenario(B, n, censor, effect, effect.d, equalsize,diff_censor,censorbig)
+home_time_table=function(B, n, censor, effect, equalsize,diff_censor,censorbig=1){
+    home_time_data=generate_home_time_scenario(B, n, censor, effect, equalsize,diff_censor,censorbig)
     result_table=home_time_simulation_results(home_time_data$home_time_data)
     return(result_table)
 }
@@ -350,61 +350,61 @@ home_time_table=function(B, n, censor, effect, effect.d, equalsize,diff_censor,c
 ##################################################################################################
 #uncensored balanced type I
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 0, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 0, effect = 0,  equalsize = 1,diff_censor=1)
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 0, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 0, effect = 0,  equalsize = 1,diff_censor=1)
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 0, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 0, effect = 0,  equalsize = 1,diff_censor=1)
 
 
 
 typeI_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(typeI_censor_balance,file="typeI_uncensor_balance.RData")
-# load("typeI_censor_balance.RData")
-# library(xtable)
-# xtable(typeI_censor_balance)
+load("typeI_censor_balance.RData")
+library(xtable)
+xtable(typeI_censor_balance,digits=4)
 ##################################################################################
 #####power censor balanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 0, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 0, effect = 1,  equalsize = 1,diff_censor=1)
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 0, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 0, effect = 1, equalsize = 1,diff_censor=1)
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 0, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 0, effect = 1,  equalsize = 1,diff_censor=1)
 
 
 power_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(power_censor_balance,file="power_uncensor_balance.RData")
 
 # 
-# load("power_censor_balance.RData")
-# library(xtable)
-# xtable(power_censor_balance)
+load("power_censor_balance.RData")
+library(xtable)
+xtable(power_censor_balance,digits=4)
 ###############################################################################
 #####type I uncensor unbalanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 0, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 0, effect = 0,  equalsize = 0,diff_censor=1)
 
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 0, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 0, effect = 0,  equalsize = 0,diff_censor=1)
 
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 0, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 0, effect = 0,  equalsize = 0,diff_censor=1)
 
 
 typeI_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
@@ -413,89 +413,90 @@ save(typeI_censor_unbalance,file="typeI_uncensor_unbalance.RData")
 
 
 
-# load("typeI_censor_unbalance.RData")
-# xtable(typeI_censor_unbalance)
+load("typeI_censor_unbalance.RData")
+xtable(typeI_censor_unbalance,digits=4)
 ##################################################################################
 #####power censor unbalanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 0, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 0, effect = 1,  equalsize = 0,diff_censor=1)
 
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 0, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 0, effect = 1,  equalsize = 0,diff_censor=1)
 
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 0, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 0, effect = 1,  equalsize = 0,diff_censor=1)
 
 
 
 power_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(power_censor_unbalance,file="power_uncensor_unbalance.RData")
 
-
+load("power_uncensor_unbalance.RData")
+xtable(power_censor_unbalance,digits=4)
 ##################################################################################################
 ####################################################################################################
 #censored balanced type I
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0,  equalsize = 1,diff_censor=1)
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0,  equalsize = 1,diff_censor=1)
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0,  equalsize = 1,diff_censor=1)
 
 
 
 typeI_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(typeI_censor_balance,file="typeI_censor_balance.RData")
-# load("typeI_censor_balance.RData")
-# library(xtable)
-# xtable(typeI_censor_balance)
+load("typeI_censor_balance.RData")
+library(xtable)
+xtable(typeI_censor_balance,digits=4)
 ##################################################################################
 #####power censor balanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 1,diff_censor=1)
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1,  equalsize = 1,diff_censor=1)
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1,  equalsize = 1,diff_censor=1)
 
 
 power_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(power_censor_balance,file="power_censor_balance.RData")
 
 # 
-# load("power_censor_balance.RData")
-# library(xtable)
-# xtable(power_censor_balance)
+load("power_censor_balance.RData")
+library(xtable)
+xtable(power_censor_balance,digits=4)
 ###############################################################################
 #####type I censor unbalanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0,  equalsize = 0,diff_censor=1)
 
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0,  equalsize = 0,diff_censor=1)
 
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0, equalsize = 0,diff_censor=1)
 
 
 typeI_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
@@ -504,89 +505,90 @@ save(typeI_censor_unbalance,file="typeI_censor_unbalance.RData")
 
 
 
-# load("typeI_censor_unbalance.RData")
-# xtable(typeI_censor_unbalance)
+load("typeI_censor_unbalance.RData")
+xtable(typeI_censor_unbalance,digits=4)
 ##################################################################################
 #####power censor unbalanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 0,diff_censor=1)
 
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1,  equalsize = 0,diff_censor=1)
 
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1,  equalsize = 0,diff_censor=1)
 
 
 
 power_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(power_censor_unbalance,file="power_censor_unbalance.RData")
 
-
+load("power_censor_unbalance.RData")
+xtable(power_censor_unbalance,digits=4)
 ##################################################################################################
 ####################################################################################################
 #censored balanced type I, small
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1,0)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0,  equalsize = 1,diff_censor=1,0)
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1,0)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0,  equalsize = 1,diff_censor=1,0)
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1,0)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0,  equalsize = 1,diff_censor=1,0)
 
 
 
 typeI_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(typeI_censor_balance,file="typeI_scensor_balance.RData")
-# load("typeI_censor_balance.RData")
-# library(xtable)
-# xtable(typeI_censor_balance)
+load("typeI_censor_balance.RData")
+library(xtable)
+xtable(typeI_censor_balance,digits=4)
 ##################################################################################
 #####power censor balanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1,0)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 1,diff_censor=1,0)
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1,0)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1,  equalsize = 1,diff_censor=1,0)
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1,0)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1, equalsize = 1,diff_censor=1,0)
 
 
 power_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(power_censor_balance,file="power_scensor_balance.RData")
 
 # 
-# load("power_censor_balance.RData")
-# library(xtable)
-# xtable(power_censor_balance)
+load("power_censor_balance.RData")
+library(xtable)
+xtable(power_censor_balance,digits=4)
 ###############################################################################
 #####type I censor unbalanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1,0)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0,  equalsize = 0,diff_censor=1,0)
 
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1,0)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0,  equalsize = 0,diff_censor=1,0)
 
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1,0)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0,  equalsize = 0,diff_censor=1,0)
 
 
 typeI_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
@@ -595,89 +597,92 @@ save(typeI_censor_unbalance,file="typeI_scensor_unbalance.RData")
 
 
 
-# load("typeI_censor_unbalance.RData")
-# xtable(typeI_censor_unbalance)
+load("typeI_censor_unbalance.RData")
+xtable(typeI_censor_unbalance,digits=4)
 ##################################################################################
 #####power censor unbalanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1,0)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 0,diff_censor=1,0)
 
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1,0)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1,  equalsize = 0,diff_censor=1,0)
 
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1,0)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1,  equalsize = 0,diff_censor=1,0)
 
 
 
 power_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(power_censor_unbalance,file="power_scensor_unbalance.RData")
 
+
+load("power_scensor_unbalance.RData")
+xtable(power_censor_unbalance,digits=4)
 #######################
 ##################################################################################################
 ####################################################################################################
 #censored balanced type I, 3
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5, n = 500, censor = 1, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1,3)
+uncensor_balance_500 <- home_time_table(B = 5, n = 500, censor = 1, effect = 0,  equalsize = 1,diff_censor=1,3)
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1,3)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0,  equalsize = 1,diff_censor=1,3)
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1,3)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0,  equalsize = 1,diff_censor=1,3)
 
 
 
 typeI_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(typeI_censor_balance,file="typeI_3censor_balance.RData")
-# load("typeI_censor_balance.RData")
-# library(xtable)
-# xtable(typeI_censor_balance)
+load("typeI_3censor_balance.RData")
+library(xtable)
+xtable(typeI_censor_balance,digits=4)
 ##################################################################################
 #####power censor balanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1,3)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 1,diff_censor=1,3)
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1,3)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1,  equalsize = 1,diff_censor=1,3)
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1,3)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1,  equalsize = 1,diff_censor=1,3)
 
 
 power_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(power_censor_balance,file="power_3censor_balance.RData")
 
 # 
-# load("power_censor_balance.RData")
-# library(xtable)
-# xtable(power_censor_balance)
+load("power_3censor_balance.RData")
+library(xtable)
+xtable(power_censor_balance,digits=4)
 ###############################################################################
 #####type I censor unbalanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1,3)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0, equalsize = 0,diff_censor=1,3)
 
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1,3)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0,  equalsize = 0,diff_censor=1,3)
 
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1,3)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0,  equalsize = 0,diff_censor=1,3)
 
 
 typeI_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
@@ -686,92 +691,92 @@ save(typeI_censor_unbalance,file="typeI_3censor_unbalance.RData")
 
 
 
-# load("typeI_censor_unbalance.RData")
-# xtable(typeI_censor_unbalance)
+load("typeI_3censor_unbalance.RData")
+xtable(typeI_censor_unbalance,digits=4)
 ##################################################################################
 #####power censor unbalanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1,3)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 0,diff_censor=1,3)
 
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1,3)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1,  equalsize = 0,diff_censor=1,3)
 
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1,3)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1,  equalsize = 0,diff_censor=1,3)
 
 
 
 power_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(power_censor_unbalance,file="power_3censor_unbalance.RData")
 
-
-
+load("power_3censor_unbalance.RData")
+xtable(power_censor_unbalance,digits=4)
 
 ####################
 ##################################################################################################
 ####################################################################################################
 #censored balanced type I, 4
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1,4)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0,  equalsize = 1,diff_censor=1,4)
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1,4)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0,  equalsize = 1,diff_censor=1,4)
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0, effect.d = 0, equalsize = 1,diff_censor=1,4)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0,  equalsize = 1,diff_censor=1,4)
 
 
 
 typeI_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(typeI_censor_balance,file="typeI_4censor_balance.RData")
-# load("typeI_censor_balance.RData")
-# library(xtable)
-# xtable(typeI_censor_balance)
+load("typeI_4censor_balance.RData")
+library(xtable)
+xtable(typeI_censor_balance,digits=4)
 ##################################################################################
 #####power censor balanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1,4)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 1,diff_censor=1,4)
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1,4)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1,  equalsize = 1,diff_censor=1,4)
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1, effect.d = 0, equalsize = 1,diff_censor=1,4)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1,  equalsize = 1,diff_censor=1,4)
 
 
 power_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(power_censor_balance,file="power_4censor_balance.RData")
 
 # 
-# load("power_censor_balance.RData")
-# library(xtable)
-# xtable(power_censor_balance)
+load("power_4censor_balance.RData")
+library(xtable)
+xtable(power_censor_balance,digits=4)
 ###############################################################################
 #####type I censor unbalanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1,4)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0,  equalsize = 0,diff_censor=1,4)
 
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1,4)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0,  equalsize = 0,diff_censor=1,4)
 
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0, effect.d = 0, equalsize = 0,diff_censor=1,4)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0,  equalsize = 0,diff_censor=1,4)
 
 
 typeI_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
@@ -780,30 +785,30 @@ save(typeI_censor_unbalance,file="typeI_4censor_unbalance.RData")
 
 
 
-# load("typeI_censor_unbalance.RData")
-# xtable(typeI_censor_unbalance)
+load("typeI_4censor_unbalance.RData")
+xtable(typeI_censor_unbalance,digits=4)
 ##################################################################################
 #####power censor unbalanced
 set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1,4)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 0,diff_censor=1,4)
 
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1,4)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1,  equalsize = 0,diff_censor=1,4)
 
 
 
 
 set.seed(123)
-uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1, effect.d = 0, equalsize = 0,diff_censor=1,4)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1, equalsize = 0,diff_censor=1,4)
 
 
 
 power_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(power_censor_unbalance,file="power_4censor_unbalance.RData")
-# load("power_censor_unbalance.RData")
-# xtable(power_censor_unbalance)
+load("power_4censor_unbalance.RData")
+xtable(power_censor_unbalance,digits=4)
 
 if(run_parallel)
 {
