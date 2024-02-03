@@ -365,6 +365,8 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 0, effect 
 
 typeI_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(typeI_censor_balance,file="typeI_uncensor_balance.RData")
+
+setwd("/Users/xzhao17/Documents/GitHub/Hometime/hometimefinaldata")
 load("typeI_censor_balance.RData")
 library(xtable)
 xtable(typeI_censor_balance,digits=4)
