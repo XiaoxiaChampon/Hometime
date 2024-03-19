@@ -83,7 +83,12 @@ home_time_regressions = function(home_time_data) {
     # COX MODEL - htevent 1: non-censored, htevent 0: censored
     
     
-    m2.2 <- coxph(Surv(time=outcome.t, event=htevent) ~ group,data = home_time_data)
+    #m2.2 <- coxph(Surv(time=outcome.t, event=htevent) ~ group,data = home_time_data)
+    
+    
+    surv_object <- with(home_time_data, Surv(outcome.t, outcome == 1))
+    m2.2 <- coxph(surv_object~ group,data=home_time_data)
+
     co2new <- unname(m2.2$coefficients)
     p2new <- (summary(m2.2))$coef[5] < 0.05
     ###############################################
