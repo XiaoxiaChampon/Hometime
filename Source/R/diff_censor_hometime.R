@@ -82,218 +82,280 @@ if(run_parallel)
 #Output: 3D array, n*5*B, n is the number of observation, 
 #5 is the column of the data (outcome, group, outcome.t , outcome.b, event), 
 #B is the number of replications
+#Output: 3D array, n*5*B, n is the number of observation, 
+#5 is the column of the data (outcome, group, outcome.t , outcome.b, event), 
+#B is the number of replications
 generate_home_time_scenario = function(B, n, censor, effect,  equalsize,diff_censor,censorbig) {
-   # B=3
-   # n=1000
-   # censor=1
-   # effect=0
-   # effect.d=0
-   # equalsize=0
-   # diff_censor=1
+  # B=3
+  # n=1000
+  # censor=1
+  # effect=0
+  # equalsize=0
+  # diff_censor=0
+  # censorbig=0
   
-    home_time_data=array(0,c(n,4,B))
-    #same censoring rate
-    if (censor==0 && diff_censor==0){censor_p=c(0)}
-    if (censor==0 && diff_censor==1){censor_p=c(0)}
-    if (censor==1 && diff_censor==0){censor_p=c(0)}
-    
-    
-    # 
-    #different censoring rate for treatment and non-treatment
-    if (censor==1 && diff_censor==1){censor_p=array(0,c(2,2,B))}
-    
-    for (j in 1:B) {
-        #j=1
-        if (censor == 0) {
-            admixture <-
-                c(rep(3, n / 4), rep(0, n / 4), rep(0, n / 4), rep(-1, n / 4))
-            
-            frailty <- rnorm(n, admixture, .5)
-            
-            
-            if (equalsize == 1) {
-                trt <- rbinom(n, 1, .5)
-            }
-            if (equalsize == 0) {
-                trt <- rbinom(n, 1, .6)
-            }
-            
-            cum.ao <- rep(0, n)
-            prev.dead <- rep(0, n)
-            
-            for (t in 1:365) {
-                if (t > 1) {
-                    prev.dead <- dead
-                }
-                
-                lin <- -7 + .00015 * t + frailty - effect * (t < 14) * trt
-                #' *The probability of the death from the linear predictor*
-                p.d <- exp(lin) / (1 + exp(lin))
-                dead <- ((rbinom(n, 1, p.d) + prev.dead) > 0)
-                #' *The probability of out of the hospital from the linear predictor*
-                lin <- 2 - 1.5 * frailty + effect * trt
-                p.o <- exp(lin) / (1 + exp(lin))
-                out <- rbinom(n, 1, p.o)
-                
-                alive.out <- (1 - dead) * out
-                
-                cum.ao <- cum.ao + alive.out
-                if (t == 365)
-                    slice.365 <- cum.ao
-            }
-            data <- data.frame(outcome = slice.365, group = trt)
-            data$outcome.t <- slice.365
-            
-            # htevent 1: non censored, 0: censored
-            data$htevent <- rep(1, n)
+  home_time_data=array(0,c(n,4,B))
+  #same censoring rate
+  if (censor==0 && diff_censor==0){censor_p=c(0)}
+  if (censor==0 && diff_censor==1){censor_p=c(0)}
+  if (censor==1 && diff_censor==0){censor_p=c(0)}
+  
+  
+  # 
+  #different censoring rate for treatment and non-treatment
+  if (censor==1 && diff_censor==1){censor_p=array(0,c(2,2,B))}
+  
+  for (j in 1:B) {
+    #j=1
+    if (censor == 0) {
+      admixture <-
+        c(rep(3, n / 4), rep(0, n / 4), rep(0, n / 4), rep(-1, n / 4))
+      
+      frailty <- rnorm(n, admixture, .5)
+      
+      
+      if (equalsize == 1) {
+        trt <- rbinom(n, 1, .5)
+      }
+      if (equalsize == 0) {
+        trt <- rbinom(n, 1, .6)
+      }
+      
+      cum.ao <- rep(0, n)
+      prev.dead <- rep(0, n)
+      
+      for (t in 1:365) {
+        #for (t in 1:90) {
+        if (t > 1) {
+          prev.dead <- dead
         }
         
+        lin <- -7 + .00015 * t + frailty - effect * (t < 14) * trt
+        #' *The probability of the death from the linear predictor*
+        p.d <- exp(lin) / (1 + exp(lin))
+        dead <- ((rbinom(n, 1, p.d) + prev.dead) > 0)
+        #' *The probability of out of the hospital from the linear predictor*
+        lin <- 2 - 1.5 * frailty + effect * trt
+        p.o <- exp(lin) / (1 + exp(lin))
+        out <- rbinom(n, 1, p.o)
         
-        if (censor == 1) {
-            admixture <-
-                c(rep(3, n / 4), rep(0, n / 4), rep(0, n / 4), rep(-1, n / 4))
-            frailty <- rnorm(n, admixture, .5)
-            
-            if (equalsize == 1) {
-                trt <- rbinom(n, 1, .5)
-            }
-            if (equalsize == 0) {
-                trt <- rbinom(n, 1, .6)
-            }
-            cum.ao <- rep(0, n)
-            prev.dead <- rep(0, n)
-            
-            prob_dead_plot_data=matrix(0,nrow=400,ncol=n)
-            prob_out_plot_data=matrix(0,nrow=400,ncol=n)
-            for (t in 1:400) {
-                if (t > 1) {
-                    prev.dead <- dead
-                }
-                
-                lin <- -7 + .00015 * t + frailty - effect * (t < 14) * trt
-                p.d <- exp(lin) / (1 + exp(lin))
-                
-                dead <- ((rbinom(n, 1, p.d) + prev.dead) > 0)
-                #######
-                prob_dead_plot_data[t,]=p.d
-                ########
-                lin <- 2 - 1.5 * frailty + effect * trt
-                p.o <- exp(lin) / (1 + exp(lin))
-                
-                #####
-                prob_out_plot_data[t,]=p.o
-                #####
-                out <- rbinom(n, 1, p.o)
-                
-                alive.out <- (1 - dead) * out
-                
-                cum.ao <- cum.ao + alive.out
-                if (t == 365)
-                    slice.365 <- cum.ao
-                #' *still need a event indicator for Cox model, even if not censored*
-                
-            }
-            # create censoring indicator
-            data <- data.frame(outcome = slice.365, group = trt)
-            data$outcome.t <- slice.365
-            
-            #####################Aug 30, uniform censoring
-            if (diff_censor==0){
-                uniform_cencoring=runif(n, 180, 365) #77%
-                for (subject_index in 1:n){
-                    ##add the proportion for the censoring, 70% for treatment and 35% for non-treatment
-                    
-                    if (data$outcome.t[subject_index]<uniform_cencoring[subject_index]){
-                        data$htevent[subject_index] <- 1
-                    }
-                    
-                    if (data$outcome.t[subject_index]>=uniform_cencoring[subject_index]){
-                        data$htevent[subject_index] <- 0
-                        data$outcome.t[subject_index]=uniform_cencoring[subject_index]
-                    }
-                    censor_p[j]=1-sum(data$htevent)/n
-                }
-            }
-            
-            ###########################################################################
-            #Nov 15, 2023 change the percentage of censoring based on treatment and non-treatment
-            #########################################################################
-            #0.1, 0.05, censor_prop_trt [1] 0.018 > censor_prop_nontrt [1] 0.004
-            #0.4, 0.2,  0.09, 0.015,  0.3, 0.15., 0.046, 0.01
-            #0.8 , 0.4 , 20%, 4%
-            if (diff_censor==1) {
-                data_nontrt=data[data$group==0,]
-                data_trt=data[data$group==1,]
-                
-                if (censorbig==1){
-                  n_trt=sample(1:dim(data_trt)[1],round(dim(data_trt)[1]*0.8))
-                  n_nontrt=sample(1:dim(data_nontrt)[1],round(dim(data_nontrt)[1]*0.4))
-                }
-                
-                if (censorbig==0){
-                  n_trt=sample(1:dim(data_trt)[1],round(dim(data_trt)[1]*0.4))
-                  n_nontrt=sample(1:dim(data_nontrt)[1],round(dim(data_nontrt)[1]*0.2))
-                }
-                
-                if (censorbig==3){
-                  n_trt=sample(1:dim(data_trt)[1],round(dim(data_trt)[1]*0.4))
-                  n_nontrt=sample(1:dim(data_nontrt)[1],round(dim(data_nontrt)[1]*0.8))
-                }
-                
-                if (censorbig==4){
-                  n_trt=sample(1:dim(data_trt)[1],round(dim(data_trt)[1]*0.2))
-                  n_nontrt=sample(1:dim(data_nontrt)[1],round(dim(data_nontrt)[1]*0.4))
-                }
-                
-                #non censored hevent 1
-               data$htevent=1
-                ######treatment group
-                ##censoring
-                #uniform_cencoring_trt=runif(n_trt, 180, 365)
-                for (subject_index in n_trt){
-                    #uniform_cencoring_trt=runif(n_trt, 240, 365)
-                    #10%
-                    uniform_cencoring_trt=runif(length(n_trt), 1, 365)
-                    ##add the proportion for the censoring, 70% for treatment and 50% for non-treatment
-                    index_union = 1
-                    if (data$outcome.t[subject_index]>uniform_cencoring_trt[index_union]){
-                        data$htevent[subject_index] <- 0
-                        data$outcome.t[subject_index]=uniform_cencoring_trt[index_union]
-                    }
-                    index_union=index_union+1
-                    censor_prop_trt=(length(n_trt)-sum(data[n_trt,]$htevent))/n
-                    
-                }
-                
-          
-                ###non-treatment group
-                #uniform_cencoring_nontrt=runif(n_nontrt, 180, 365)
-                for (subject_index in n_nontrt){
-                  #5%
-                    #uniform_cencoring_nontrt=runif(n_nontrt, 360,365 )
-                    uniform_cencoring_nontrt=runif(length(n_nontrt), 1,365 )
-                    ##add the proportion for the censoring, 70% for treatment and 50% for non-treatment
-                    index_union = 1
-                    if (data$outcome.t[subject_index]>uniform_cencoring_nontrt[index_union]){
-                        data$htevent[subject_index] <- 0
-                        data$outcome.t[subject_index]=uniform_cencoring_nontrt[index_union]
-                    }
-                    index_union=index_union+1
-                    censor_prop_nontrt=(length(n_nontrt)-sum(data[n_nontrt,]$htevent))/n
-                }
-                censor_p[1,,j]=c(1,censor_prop_trt)
-                censor_p[2,,j]=c(0,censor_prop_nontrt)
-            }
-            
-
-        }
+        alive.out <- (1 - dead) * out
         
-        home_time_data[,,j]=as.matrix(data)
+        cum.ao <- cum.ao + alive.out
+        if (t == 365)
+          #if (t == 90)
+          slice.365 <- cum.ao
+      }
+      data <- data.frame(outcome = slice.365, group = trt)
+      data$outcome.t <- slice.365
+      
+      # htevent 1: non censored, 0: censored
+      data$htevent <- rep(1, n)
     }
-    return(list("home_time_data"=home_time_data,"censor_p"=censor_p))
+    
+    
+    if (censor == 1) {
+      admixture <-
+        c(rep(3, n / 4), rep(0, n / 4), rep(0, n / 4), rep(-1, n / 4))
+      frailty <- rnorm(n, admixture, .5)
+      
+      if (equalsize == 1) {
+        trt <- rbinom(n, 1, .5)
+      }
+      if (equalsize == 0) {
+        trt <- rbinom(n, 1, .6)
+      }
+      cum.ao <- rep(0, n)
+      prev.dead <- rep(0, n)
+      
+      # prob_dead_plot_data=matrix(0,nrow=400,ncol=n)
+      # prob_out_plot_data=matrix(0,nrow=400,ncol=n)
+      #boundary_date=120
+      boundary_date=400
+      prob_dead_plot_data=matrix(0,nrow=boundary_date,ncol=n)
+      prob_out_plot_data=matrix(0,nrow=boundary_date,ncol=n)
+      for (t in 1:boundary_date) {
+        if (t > 1) {
+          prev.dead <- dead
+        }
+        
+        lin <- -7 + .00015 * t + frailty - effect * (t < 14) * trt
+        p.d <- exp(lin) / (1 + exp(lin))
+        
+        dead <- ((rbinom(n, 1, p.d) + prev.dead) > 0)
+        #######
+        prob_dead_plot_data[t,]=p.d
+        ########
+        lin <- 2 - 1.5 * frailty + effect * trt
+        p.o <- exp(lin) / (1 + exp(lin))
+        
+        #####
+        prob_out_plot_data[t,]=p.o
+        #####
+        out <- rbinom(n, 1, p.o)
+        
+        alive.out <- (1 - dead) * out
+        
+        cum.ao <- cum.ao + alive.out
+        if (t == 365)
+          #if (t == 90)
+          slice.365 <- cum.ao
+        #' *still need a event indicator for Cox model, even if not censored*
+        
+      }
+      # create censoring indicator
+      data <- data.frame(outcome = slice.365, group = trt)
+      data$outcome.t <- slice.365
+      
+      #####################Aug 30, uniform censoring
+      if (diff_censor==0){
+        uniform_cencoring=runif(n, 180, 365) #77%
+        #uniform_cencoring=runif(n, 45, 90) #77%
+        for (subject_index in 1:n){
+          ##add the proportion for the censoring, 70% for treatment and 35% for non-treatment
+          
+          if (data$outcome.t[subject_index]<uniform_cencoring[subject_index]){
+            data$htevent[subject_index] <- 1
+          }
+          
+          if (data$outcome.t[subject_index]>=uniform_cencoring[subject_index]){
+            data$htevent[subject_index] <- 0
+            data$outcome.t[subject_index]=uniform_cencoring[subject_index]
+          }
+          censor_p[j]=1-sum(data$htevent)/n
+        }
+      }
+      
+      ###########################################################################
+      #Nov 15, 2023 change the percentage of censoring based on treatment and non-treatment
+      #########################################################################
+      #0.1, 0.05, censor_prop_trt [1] 0.018 > censor_prop_nontrt [1] 0.004
+      #0.4, 0.2,  0.09, 0.015,  0.3, 0.15., 0.046, 0.01
+      #0.8 , 0.4 , 20%, 4%
+      if (diff_censor==1) {
+        data_nontrt=data[data$group==0,]
+        data_trt=data[data$group==1,]
+        
+        if (censorbig==1){
+          n_trt=sample(1:dim(data_trt)[1],round(dim(data_trt)[1]*0.8))
+          n_nontrt=sample(1:dim(data_nontrt)[1],round(dim(data_nontrt)[1]*0.4))
+        }
+        
+        if (censorbig==0){
+          n_trt=sample(1:dim(data_trt)[1],round(dim(data_trt)[1]*0.4))
+          n_nontrt=sample(1:dim(data_nontrt)[1],round(dim(data_nontrt)[1]*0.2))
+        }
+        
+        if (censorbig==3){
+          n_trt=sample(1:dim(data_trt)[1],round(dim(data_trt)[1]*0.4))
+          n_nontrt=sample(1:dim(data_nontrt)[1],round(dim(data_nontrt)[1]*0.8))
+        }
+        
+        if (censorbig==4){
+          n_trt=sample(1:dim(data_trt)[1],round(dim(data_trt)[1]*0.2))
+          n_nontrt=sample(1:dim(data_nontrt)[1],round(dim(data_nontrt)[1]*0.4))
+        }
+        
+        #non censored hevent 1
+        data$htevent=1
+        ######treatment group
+        ##censoring
+        #uniform_cencoring_trt=runif(n_trt, 180, 365)
+        for (subject_index in n_trt){
+          #uniform_cencoring_trt=runif(n_trt, 240, 365)
+          #10%
+          uniform_cencoring_trt=runif(length(n_trt), 1, 365)
+          #uniform_cencoring_trt=runif(length(n_trt), 1, 90)
+          ##add the proportion for the censoring, 70% for treatment and 50% for non-treatment
+          index_union = 1
+          if (data$outcome.t[subject_index]>uniform_cencoring_trt[index_union]){
+            data$htevent[subject_index] <- 0
+            data$outcome.t[subject_index]=uniform_cencoring_trt[index_union]
+          }
+          index_union=index_union+1
+          censor_prop_trt=(length(n_trt)-sum(data[n_trt,]$htevent))/n
+          
+        }
+        
+        
+        ###non-treatment group
+        #uniform_cencoring_nontrt=runif(n_nontrt, 180, 365)
+        for (subject_index in n_nontrt){
+          #5%
+          #uniform_cencoring_nontrt=runif(n_nontrt, 360,365 )
+          uniform_cencoring_nontrt=runif(length(n_nontrt), 1,365 )
+          #uniform_cencoring_nontrt=runif(length(n_nontrt), 1,90 )
+          ##add the proportion for the censoring, 70% for treatment and 50% for non-treatment
+          index_union = 1
+          if (data$outcome.t[subject_index]>uniform_cencoring_nontrt[index_union]){
+            data$htevent[subject_index] <- 0
+            data$outcome.t[subject_index]=uniform_cencoring_nontrt[index_union]
+          }
+          index_union=index_union+1
+          censor_prop_nontrt=(length(n_nontrt)-sum(data[n_nontrt,]$htevent))/n
+        }
+        censor_p[1,,j]=c(1,censor_prop_trt)
+        censor_p[2,,j]=c(0,censor_prop_nontrt)
+      }
+      
+      
+    }
+    
+    home_time_data[,,j]=as.matrix(data)
+  }
+  return(list("home_time_data"=home_time_data,"censor_p"=censor_p))
 }
+#get sample data
+#B, n, censor, effect,  equalsize,diff_censor,censorbig
 
-# abcs=generate_home_time_scenario(5, 1000, 1, 0, 0, 0,1)
+# n1000_same_censor_no_effect=generate_home_time_scenario(B=5000, n=1000, censor=1, effect=0, 
+#                                                      equalsize=0, diff_censor=0,censorbig=1)
+# n500_same_censor_no_effect=generate_home_time_scenario(B=5000, n=500, censor=1, effect=0, 
+#                                                     equalsize=0, diff_censor=0,censorbig=1)
+# n1000_diff_censor_no_effect=generate_home_time_scenario(B=5000, n=1000, censor=1, effect=0, 
+#                                                      equalsize=0, diff_censor=1,censorbig=1)
+# 
+# n500_diff_censor_no_effect=generate_home_time_scenario(B=5000, n=500, censor=1, effect=0, 
+#                                                     equalsize=0, diff_censor=1,censorbig=1)
+# 
+# start_time=Sys.time()
+# n1000_same_censor_effect=generate_home_time_scenario(B=5000, n=1000, censor=1, effect=1, 
+#                                   equalsize=0, diff_censor=0,censorbig=1)
+# end_time=Sys.time()
+# time_used=end_time-start_time
+# time_used
+# #save(n1000_same_censor_effect,file="n1000_same_censor_effect.RData")
+# 
+# start_time=Sys.time()
+# n500_same_censor_effect=generate_home_time_scenario(B=5000, n=500, censor=1, effect=1, 
+#                                                         equalsize=0, diff_censor=0,censorbig=1)
+# end_time=Sys.time()
+# time_used=end_time-start_time
+# time_used
+# 
+# #save(n500_same_censor_effect,file="n500_same_censor_effect.RData")
+# 
+# start_time=Sys.time()
+# n1000_diff_censor_effect=generate_home_time_scenario(B=5000, n=1000, censor=1, effect=1, 
+#                                                         equalsize=0, diff_censor=1,censorbig=1)
+# end_time=Sys.time()
+# time_used=end_time-start_time
+# time_used
+# 
+# #save(n1000_diff_censor_effect,file="n1000_diff_censor_effect.RData")
+# 
+# start_time=Sys.time()
+# n500_diff_censor_effect=generate_home_time_scenario(B=5000, n=500, censor=1, effect=1, 
+#                                                        equalsize=0, diff_censor=1,censorbig=1)
+# end_time=Sys.time()
+# time_used=end_time-start_time
+# time_used
+# save(n500_diff_censor_effect,n1000_diff_censor_effect,
+#      n1000_same_censor_effect,n500_same_censor_effect,
+#      n1000_same_censor_no_effect,n500_same_censor_no_effect,
+#      n1000_diff_censor_no_effect,n500_diff_censor_no_effect,
+#      file="n500_n1000_censor_effect.RData")
+
 # apply(abcs$censor_p,c(1,2),mean)[1,2] #0.077
 # apply(abcs$censor_p,c(1,2),mean)[2,2] #0.0178
 
@@ -302,32 +364,32 @@ generate_home_time_scenario = function(B, n, censor, effect,  equalsize,diff_cen
 #Output: average values (parameter, standard error for parameter and p-value) for B replications
 
 home_time_simulation_results=function(home_time_scenario_data){
-    num_replica=dim(home_time_scenario_data)[3]
-    power <- matrix(nrow = num_replica, ncol = 6)
-    param.est <- matrix(nrow = num_replica, ncol = 6)
-    n=dim(home_time_scenario_data)[1]
-    
-    foreach_out <- foreach (j = 1:num_replica, .combine = cbind, .init = NULL) %dorng% {
-        source("functions_hometime.R")
-        home_time_data_rep=data.frame(home_time_scenario_data[,,j])
-        colnames(home_time_data_rep)=c("outcome", "group","outcome.t","htevent" )
-        param.est_j=home_time_regressions(home_time_data_rep)$param.est
-        power_j=home_time_regressions(home_time_data_rep)$power
-        return(c(param.est_j, power_j))
-    }
-    
-    param.est=t(foreach_out[1:6,])
-    power=t(foreach_out[7:12,])
-    a.param <- apply(param.est, MARGIN = 2, FUN = mean)
-    a.paramsd <- apply(param.est, MARGIN = 2, FUN = sd) / sqrt(n)
-    a.power <- apply(power, MARGIN = 2, FUN = mean)
-    a.powerse<- sqrt((a.power*(1-a.power))/num_replica)
-    result <- cbind(a.param, a.paramsd, a.power, a.powerse)
+  num_replica=dim(home_time_scenario_data)[3]
+  power <- matrix(nrow = num_replica, ncol = 6)
+  param.est <- matrix(nrow = num_replica, ncol = 6)
+  n=dim(home_time_scenario_data)[1]
   
-    rownames(result) <- c("lin",  "med",  "poi","nb","cox", "temp")
- 
-    colnames(result) <-c("est", "se", "power","powerse")
-    return(result)
+  foreach_out <- foreach (j = 1:num_replica, .combine = cbind, .init = NULL) %dorng% {
+    source("functions_hometime.R")
+    home_time_data_rep=data.frame(home_time_scenario_data[,,j])
+    colnames(home_time_data_rep)=c("outcome", "group","outcome.t","htevent" )
+    param.est_j=home_time_regressions(home_time_data_rep)$param.est
+    power_j=home_time_regressions(home_time_data_rep)$power
+    return(c(param.est_j, power_j))
+  }
+  
+  param.est=t(foreach_out[1:6,])
+  power=t(foreach_out[7:12,])
+  a.param <- apply(param.est, MARGIN = 2, FUN = mean)
+  a.paramsd <- apply(param.est, MARGIN = 2, FUN = sd) / sqrt(n)
+  a.power <- apply(power, MARGIN = 2, FUN = mean)
+  a.powerse<- sqrt((a.power*(1-a.power))/num_replica)
+  result <- cbind(a.param, a.paramsd, a.power, a.powerse)
+  
+  rownames(result) <- c("lin",  "med",  "poi","nb","cox", "temp")
+  
+  colnames(result) <-c("est", "se", "power","powerse")
+  return(result)
 }
 
 
@@ -342,9 +404,9 @@ home_time_simulation_results=function(home_time_scenario_data){
 
 #Output: 6 rows (one per model), 3 columns (parameter, standard error, p-value)
 home_time_table=function(B, n, censor, effect, equalsize,diff_censor,censorbig=1){
-    home_time_data=generate_home_time_scenario(B, n, censor, effect, equalsize,diff_censor,censorbig)
-    result_table=home_time_simulation_results(home_time_data$home_time_data)
-    return(result_table)
+  home_time_data=generate_home_time_scenario(B, n, censor, effect, equalsize,diff_censor,censorbig)
+  result_table=home_time_simulation_results(home_time_data$home_time_data)
+  return(result_table)
 }
 #################################################################################################
 ##################################################################################################
@@ -365,11 +427,9 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 0, effect 
 
 typeI_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(typeI_censor_balance,file="typeI_uncensor_balance.RData")
-
-setwd("/Users/xzhao17/Documents/GitHub/Hometime/hometimefinaldata")
-load("typeI_censor_balance.RData")
-library(xtable)
-xtable(typeI_censor_balance,digits=4)
+#load("typeI_censor_balance.RData")
+#library(xtable)
+#xtable(typeI_censor_balance,digits=4)
 ##################################################################################
 #####power censor balanced
 set.seed(123)
@@ -389,9 +449,9 @@ power_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_b
 save(power_censor_balance,file="power_uncensor_balance.RData")
 
 # 
-load("power_censor_balance.RData")
-library(xtable)
-xtable(power_censor_balance,digits=4)
+#load("power_censor_balance.RData")
+#library(xtable)
+#xtable(power_censor_balance,digits=4)
 ###############################################################################
 #####type I uncensor unbalanced
 set.seed(123)
@@ -415,8 +475,8 @@ save(typeI_censor_unbalance,file="typeI_uncensor_unbalance.RData")
 
 
 
-load("typeI_censor_unbalance.RData")
-xtable(typeI_censor_unbalance,digits=4)
+#load("typeI_censor_unbalance.RData")
+#xtable(typeI_censor_unbalance,digits=4)
 ##################################################################################
 #####power censor unbalanced
 set.seed(123)
@@ -438,10 +498,106 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 0, effect 
 power_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
 save(power_censor_unbalance,file="power_uncensor_unbalance.RData")
 
-load("power_uncensor_unbalance.RData")
-xtable(power_censor_unbalance,digits=4)
+#load("power_uncensor_unbalance.RData")
+#xtable(power_censor_unbalance,digits=4)
 ##################################################################################################
 ####################################################################################################
+#just uniform censoring
+#censored balanced type I
+set.seed(123)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0,  equalsize = 1,diff_censor=0)
+
+
+set.seed(123)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0,  equalsize = 1,diff_censor=0)
+
+
+
+set.seed(123)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0,  equalsize = 1,diff_censor=0)
+
+
+
+typeI_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
+##big differences between treatment, and control, more treatment
+save(typeI_censor_balance,file="typeI_uniformcensor_balance.RData")
+#load("typeI_censor_balance.RData")
+#library(xtable)
+#xtable(typeI_censor_balance,digits=4)
+##################################################################################
+#####power censor balanced
+set.seed(123)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 1,diff_censor=0)
+
+
+set.seed(123)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1,  equalsize = 1,diff_censor=0)
+
+
+
+set.seed(123)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1,  equalsize = 1,diff_censor=0)
+
+
+power_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
+save(power_censor_balance,file="power_uniformcensor_balance.RData")
+
+# 
+#load("power_censor_balance.RData")
+#library(xtable)
+#xtable(power_censor_balance,digits=4)
+###############################################################################
+#####type I censor unbalanced
+set.seed(123)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0,  equalsize = 0,diff_censor=0)
+
+
+
+set.seed(123)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0,  equalsize = 0,diff_censor=0)
+
+
+
+
+set.seed(123)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 0, equalsize = 0,diff_censor=0)
+
+
+typeI_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
+save(typeI_censor_unbalance,file="typeI_uniformcensor_unbalance.RData")
+
+
+
+
+#load("typeI_censor_unbalance.RData")
+#xtable(typeI_censor_unbalance,digits=4)
+##################################################################################
+#####power censor unbalanced
+set.seed(123)
+uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 0,diff_censor=0)
+
+
+
+set.seed(123)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 1,  equalsize = 0,diff_censor=0)
+
+
+
+
+set.seed(123)
+uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect = 1,  equalsize = 0,diff_censor=0)
+
+
+
+power_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
+save(power_censor_unbalance,file="power_uniformcensor_unbalance.RData")
+
+
+
+
+######3/13
+###################################################################################################
+###################################################################################################
 #censored balanced type I
 set.seed(123)
 uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0,  equalsize = 1,diff_censor=1)
@@ -458,10 +614,11 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 typeI_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(typeI_censor_balance,file="typeI_censor_balance.RData")
-load("typeI_censor_balance.RData")
-library(xtable)
-xtable(typeI_censor_balance,digits=4)
+##big differences between treatment, and control, more treatment
+save(typeI_censor_balance,file="typeI_bigdiffcensor_balance.RData")
+#load("typeI_censor_balance.RData")
+#library(xtable)
+#xtable(typeI_censor_balance,digits=4)
 ##################################################################################
 #####power censor balanced
 set.seed(123)
@@ -478,12 +635,12 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 power_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(power_censor_balance,file="power_censor_balance.RData")
+save(power_censor_balance,file="power_bigdiffcensor_balance.RData")
 
 # 
-load("power_censor_balance.RData")
-library(xtable)
-xtable(power_censor_balance,digits=4)
+#load("power_censor_balance.RData")
+#library(xtable)
+#xtable(power_censor_balance,digits=4)
 ###############################################################################
 #####type I censor unbalanced
 set.seed(123)
@@ -502,13 +659,13 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 typeI_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(typeI_censor_unbalance,file="typeI_censor_unbalance.RData")
+save(typeI_censor_unbalance,file="typeI_bigdiffcensor_unbalance.RData")
 
 
 
 
-load("typeI_censor_unbalance.RData")
-xtable(typeI_censor_unbalance,digits=4)
+#load("typeI_censor_unbalance.RData")
+#xtable(typeI_censor_unbalance,digits=4)
 ##################################################################################
 #####power censor unbalanced
 set.seed(123)
@@ -528,10 +685,10 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 power_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(power_censor_unbalance,file="power_censor_unbalance.RData")
+save(power_censor_unbalance,file="power_bigdiffcensor_unbalance.RData")
 
-load("power_censor_unbalance.RData")
-xtable(power_censor_unbalance,digits=4)
+#load("power_censor_unbalance.RData")
+#xtable(power_censor_unbalance,digits=4)
 ##################################################################################################
 ####################################################################################################
 #censored balanced type I, small
@@ -550,10 +707,11 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 typeI_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(typeI_censor_balance,file="typeI_scensor_balance.RData")
-load("typeI_censor_balance.RData")
-library(xtable)
-xtable(typeI_censor_balance,digits=4)
+#scensor is small difference between treatment and control, treatment more
+save(typeI_censor_balance,file="typeI_smalldiffcensor_balance.RData")
+#load("typeI_censor_balance.RData")
+#library(xtable)
+#xtable(typeI_censor_balance,digits=4)
 ##################################################################################
 #####power censor balanced
 set.seed(123)
@@ -570,12 +728,14 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 power_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(power_censor_balance,file="power_scensor_balance.RData")
+save(power_censor_balance,file="power_smalldiffcensor_balance.RData")
 
-# 
-load("power_censor_balance.RData")
-library(xtable)
-xtable(power_censor_balance,digits=4)
+# ###########################################################################################
+######################################################################################
+##########################################################################################
+#load("power_censor_balance.RData")
+#library(xtable)
+#xtable(power_censor_balance,digits=4)
 ###############################################################################
 #####type I censor unbalanced
 set.seed(123)
@@ -594,15 +754,15 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 typeI_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(typeI_censor_unbalance,file="typeI_scensor_unbalance.RData")
+save(typeI_censor_unbalance,file="typeI_smalldiffcensor_unbalance.RData")
 
 
 
 
-load("typeI_censor_unbalance.RData")
-xtable(typeI_censor_unbalance,digits=4)
-##################################################################################
-#####power censor unbalanced
+# #load("typeI_censor_unbalance.RData")
+# #xtable(typeI_censor_unbalance,digits=4)
+# ##################################################################################
+# #####power censor unbalanced
 set.seed(123)
 uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 0,diff_censor=1,0)
 
@@ -620,15 +780,15 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 power_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(power_censor_unbalance,file="power_scensor_unbalance.RData")
+save(power_censor_unbalance,file="power_smalldiffcensor_unbalance.RData")
 
 
-load("power_scensor_unbalance.RData")
-xtable(power_censor_unbalance,digits=4)
-#######################
-##################################################################################################
-####################################################################################################
-#censored balanced type I, 3
+# #load("power_scensor_unbalance.RData")
+# #xtable(power_censor_unbalance,digits=4)
+# #######################
+# ##################################################################################################
+# ####################################################################################################
+# #censored balanced type I, 3
 set.seed(123)
 uncensor_balance_500 <- home_time_table(B = 5, n = 500, censor = 1, effect = 0,  equalsize = 1,diff_censor=1,3)
 
@@ -644,12 +804,13 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 typeI_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(typeI_censor_balance,file="typeI_3censor_balance.RData")
-load("typeI_3censor_balance.RData")
-library(xtable)
-xtable(typeI_censor_balance,digits=4)
-##################################################################################
-#####power censor balanced
+#3censor is big censoring contrl, big difference
+save(typeI_censor_balance,file="typeI_reversebigdiffcensor_balance.RData")
+# #load("typeI_3censor_balance.RData")
+# #library(xtable)
+# #xtable(typeI_censor_balance,digits=4)
+# ##################################################################################
+# #####power censor balanced
 set.seed(123)
 uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 1,diff_censor=1,3)
 
@@ -664,14 +825,14 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 power_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(power_censor_balance,file="power_3censor_balance.RData")
+save(power_censor_balance,file="power_reversebigdiffcensor_balance.RData")
 
-# 
-load("power_3censor_balance.RData")
-library(xtable)
-xtable(power_censor_balance,digits=4)
-###############################################################################
-#####type I censor unbalanced
+# # 
+# #load("power_3censor_balance.RData")
+# #library(xtable)
+# #xtable(power_censor_balance,digits=4)
+# ###############################################################################
+# #####type I censor unbalanced
 set.seed(123)
 uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0, equalsize = 0,diff_censor=1,3)
 
@@ -688,15 +849,15 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 typeI_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(typeI_censor_unbalance,file="typeI_3censor_unbalance.RData")
+save(typeI_censor_unbalance,file="typeI_reversebigdiffcensor_unbalance.RData")
 
 
 
 
-load("typeI_3censor_unbalance.RData")
-xtable(typeI_censor_unbalance,digits=4)
-##################################################################################
-#####power censor unbalanced
+# #load("typeI_3censor_unbalance.RData")
+# #xtable(typeI_censor_unbalance,digits=4)
+# ##################################################################################
+# #####power censor unbalanced
 set.seed(123)
 uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 0,diff_censor=1,3)
 
@@ -714,15 +875,15 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 power_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(power_censor_unbalance,file="power_3censor_unbalance.RData")
+save(power_censor_unbalance,file="power_reversebigdiffcensor_unbalance.RData")
 
-load("power_3censor_unbalance.RData")
-xtable(power_censor_unbalance,digits=4)
+# #load("power_3censor_unbalance.RData")
+# ##xtable(power_censor_unbalance,digits=4)
 
-####################
-##################################################################################################
-####################################################################################################
-#censored balanced type I, 4
+# ####################
+# ##################################################################################################
+# ####################################################################################################
+# #censored balanced type I, 4
 set.seed(123)
 uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0,  equalsize = 1,diff_censor=1,4)
 
@@ -738,12 +899,12 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 typeI_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(typeI_censor_balance,file="typeI_4censor_balance.RData")
-load("typeI_4censor_balance.RData")
-library(xtable)
-xtable(typeI_censor_balance,digits=4)
-##################################################################################
-#####power censor balanced
+save(typeI_censor_balance,file="typeI_reversesmalldiffcensor_balance.RData")
+# #load("typeI_4censor_balance.RData")
+# #library(xtable)
+# #xtable(typeI_censor_balance,digits=4)
+# ##################################################################################
+# #####power censor balanced
 set.seed(123)
 uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 1,diff_censor=1,4)
 
@@ -758,14 +919,14 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 power_censor_balance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(power_censor_balance,file="power_4censor_balance.RData")
+save(power_censor_balance,file="power_reversesmalldiffcensor_balance.RData")
 
-# 
-load("power_4censor_balance.RData")
-library(xtable)
-xtable(power_censor_balance,digits=4)
-###############################################################################
-#####type I censor unbalanced
+# # 
+# #load("power_4censor_balance.RData")
+# #library(xtable)
+# #xtable(power_censor_balance,digits=4)
+# ###############################################################################
+# #####type I censor unbalanced
 set.seed(123)
 uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 0,  equalsize = 0,diff_censor=1,4)
 
@@ -782,15 +943,15 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 typeI_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(typeI_censor_unbalance,file="typeI_4censor_unbalance.RData")
+save(typeI_censor_unbalance,file="typeI_reversesmalldiffcensor_unbalance.RData")
 
 
 
 
-load("typeI_4censor_unbalance.RData")
-xtable(typeI_censor_unbalance,digits=4)
-##################################################################################
-#####power censor unbalanced
+# #load("typeI_4censor_unbalance.RData")
+# #xtable(typeI_censor_unbalance,digits=4)
+# ##################################################################################
+# #####power censor unbalanced
 set.seed(123)
 uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 1,  equalsize = 0,diff_censor=1,4)
 
@@ -808,12 +969,13 @@ uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, censor = 1, effect 
 
 
 power_censor_unbalance=cbind(uncensor_balance_500,uncensor_balance_1000,uncensor_balance_5000)
-save(power_censor_unbalance,file="power_4censor_unbalance.RData")
-load("power_4censor_unbalance.RData")
-xtable(power_censor_unbalance,digits=4)
+save(power_censor_unbalance,file="power_reversesmalldiffcensor_unbalance.RData")
+#4 is small difference , control bigger, different censoring
+#load("power_4censor_unbalance.RData")
+#xtable(power_censor_unbalance,digits=4)
 
 if(run_parallel)
 {
-    parallel::stopCluster(cl = my.cluster)
-    initialized_parallel <- FALSE
+  parallel::stopCluster(cl = my.cluster)
+  initialized_parallel <- FALSE
 }
