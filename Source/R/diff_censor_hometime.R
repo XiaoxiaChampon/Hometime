@@ -307,8 +307,8 @@ generate_home_time_scenario = function(B, n, censor, effect,  equalsize,diff_cen
 }
 #get sample data
 #B, n, censor, effect,  equalsize,diff_censor,censorbig
-
-# n1000_same_censor_no_effect=generate_home_time_scenario(B=5000, n=1000, censor=1, effect=0, 
+# 
+# n1000_same_censor_no_effect=generate_home_time_scenario(B=2, n=1000, censor=0, effect=0,
 #                                                      equalsize=0, diff_censor=0,censorbig=1)
 # n500_same_censor_no_effect=generate_home_time_scenario(B=5000, n=500, censor=1, effect=0, 
 #                                                     equalsize=0, diff_censor=0,censorbig=1)
@@ -319,8 +319,8 @@ generate_home_time_scenario = function(B, n, censor, effect,  equalsize,diff_cen
 #                                                     equalsize=0, diff_censor=1,censorbig=1)
 # 
 # start_time=Sys.time()
-# n1000_same_censor_effect=generate_home_time_scenario(B=5000, n=1000, censor=1, effect=1, 
-#                                   equalsize=0, diff_censor=0,censorbig=1)
+n1000_same_censor_effect=generate_home_time_scenario(B=2, n=1000, censor=1, effect=1,
+                                  equalsize=0, diff_censor=0,censorbig=1)
 # end_time=Sys.time()
 # time_used=end_time-start_time
 # time_used
@@ -370,7 +370,7 @@ home_time_simulation_results=function(home_time_scenario_data){
   n=dim(home_time_scenario_data)[1]
   
   foreach_out <- foreach (j = 1:num_replica, .combine = cbind, .init = NULL) %dorng% {
-    source("functions_hometime.R")
+    source("./Source/R/functions_hometime.R")
     home_time_data_rep=data.frame(home_time_scenario_data[,,j])
     colnames(home_time_data_rep)=c("outcome", "group","outcome.t","htevent" )
     param.est_j=home_time_regressions(home_time_data_rep)$param.est
@@ -411,12 +411,12 @@ home_time_table=function(B, n, censor, effect, equalsize,diff_censor,censorbig=1
 #################################################################################################
 ##################################################################################################
 #uncensored balanced type I
-set.seed(123)
-uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 0, effect = 0,  equalsize = 1,diff_censor=1)
+# set.seed(123)
+# uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 0, effect = 0,  equalsize = 1,diff_censor=1)
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 0, effect = 0,  equalsize = 1,diff_censor=1)
+uncensor_balance_1000 <- home_time_table(B = 2, n = 1000, censor = 0, effect = 0,  equalsize = 1,diff_censor=1)
 
 
 
