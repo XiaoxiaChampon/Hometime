@@ -84,8 +84,6 @@ home_time_regressions = function(home_time_data) {
     
     
     m2.2 <- coxph(Surv(time=outcome.t, event=htevent) ~ group,data = home_time_data)
-    
-    
     # surv_object <- with(home_time_data, Surv(outcome.t, outcome == 1))
     # m2.2 <- coxph(surv_object~ group,data=home_time_data)
 
@@ -100,8 +98,7 @@ home_time_regressions = function(home_time_data) {
     
     # negative binomial
     
-    m4 <-
-        summary(glm(outcome.t ~ group, family = negative.binomial(.3), data =  home_time_data))
+    m4 <-summary(glm(outcome.t ~ group, family = negative.binomial(.3), data =  home_time_data))
     p4 <- m4$coefficients[2, 4] < 0.05
     co4 <- m4$coefficients[2, 1]
     

@@ -305,22 +305,14 @@ generate_home_time_scenario = function(B, n, censor, effect,  equalsize,diff_cen
   }
   return(list("home_time_data"=home_time_data,"censor_p"=censor_p))
 }
-#get sample data
-#B, n, censor, effect,  equalsize,diff_censor,censorbig
+
 # 
-# n1000_same_censor_no_effect=generate_home_time_scenario(B=2, n=1000, censor=0, effect=0,
-#                                                      equalsize=0, diff_censor=0,censorbig=1)
-# n500_same_censor_no_effect=generate_home_time_scenario(B=5000, n=500, censor=1, effect=0, 
-#                                                     equalsize=0, diff_censor=0,censorbig=1)
-# n1000_diff_censor_no_effect=generate_home_time_scenario(B=5000, n=1000, censor=1, effect=0, 
-#                                                      equalsize=0, diff_censor=1,censorbig=1)
-# 
-# n500_diff_censor_no_effect=generate_home_time_scenario(B=5000, n=500, censor=1, effect=0, 
+# n500_diff_censor_no_effect=generate_home_time_scenario(B=2, n=500, censor=1, effect=0, 
 #                                                     equalsize=0, diff_censor=1,censorbig=1)
 # 
 # start_time=Sys.time()
-n1000_same_censor_effect=generate_home_time_scenario(B=2, n=1000, censor=1, effect=1,
-                                  equalsize=0, diff_censor=0,censorbig=1)
+# n1000_same_censor_effect=generate_home_time_scenario(B=2, n=1000, censor=1, effect=1,
+#                                   equalsize=0, diff_censor=0,censorbig=1)
 # end_time=Sys.time()
 # time_used=end_time-start_time
 # time_used
