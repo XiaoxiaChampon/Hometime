@@ -359,28 +359,33 @@ home_time_simulation_results=function(home_time_scenario_data){
   num_replica=dim(home_time_scenario_data)[3]
   power <- matrix(nrow = num_replica, ncol = 6)
   param.est <- matrix(nrow = num_replica, ncol = 6)
+  se.est <- matrix(nrow = num_replica, ncol = 6)
   n=dim(home_time_scenario_data)[1]
   
   foreach_out <- foreach (j = 1:num_replica, .combine = cbind, .init = NULL) %dorng% {
     source("./Source/R/functions_hometime.R")
     home_time_data_rep=data.frame(home_time_scenario_data[,,j])
     colnames(home_time_data_rep)=c("outcome", "group","outcome.t","htevent" )
-    param.est_j=home_time_regressions(home_time_data_rep)$param.est
-    power_j=home_time_regressions(home_time_data_rep)$power
-    return(c(param.est_j, power_j))
+    result_hometime=home_time_regressions(home_time_data_rep)
+    param.est_j=result_hometime$param.est
+    power_j=result_hometime$power
+    se.est_j=result_hometime$se_model
+    return(c(param.est_j, power_j,se.est_j))
   }
   
   param.est=t(foreach_out[1:6,])
   power=t(foreach_out[7:12,])
+  se_model=t(foreach_out[13:18,])
   a.param <- apply(param.est, MARGIN = 2, FUN = mean)
-  a.paramsd <- apply(param.est, MARGIN = 2, FUN = sd) / sqrt(n)
+  a.paramsd <- apply(param.est, MARGIN = 2, FUN = sd) 
+  a.paramsdmodel <- apply(se_model, MARGIN = 2, FUN = mean) 
   a.power <- apply(power, MARGIN = 2, FUN = mean)
   a.powerse<- sqrt((a.power*(1-a.power))/num_replica)
-  result <- cbind(a.param, a.paramsd, a.power, a.powerse)
+  result <- cbind(a.param,a.paramsdmodel, a.paramsd, a.power, a.powerse)
   
   rownames(result) <- c("lin",  "med",  "poi","nb","cox", "temp")
   
-  colnames(result) <-c("est", "se", "power","powerse")
+  colnames(result) <-c("est", "semodel","se", "power","powerse")
   return(result)
 }
 
@@ -394,7 +399,7 @@ home_time_simulation_results=function(home_time_scenario_data){
 #effect: scalar, treatment effect, usually 0 means no effect, 1 means has some effect
 #effect.d: scalar, effect of treatment on death, usually 0 means no effect of death, 1 means has some effect
 
-#Output: 6 rows (one per model), 3 columns (parameter, standard error, p-value)
+#Output: 6 rows (one per model), 4 columns (parameter, standard error model, standard error, p-value)
 home_time_table=function(B, n, censor, effect, equalsize,diff_censor,censorbig=1){
   home_time_data=generate_home_time_scenario(B, n, censor, effect, equalsize,diff_censor,censorbig)
   result_table=home_time_simulation_results(home_time_data$home_time_data)
@@ -404,11 +409,11 @@ home_time_table=function(B, n, censor, effect, equalsize,diff_censor,censorbig=1
 ##################################################################################################
 #uncensored balanced type I
 # set.seed(123)
-# uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 0, effect = 0,  equalsize = 1,diff_censor=1)
+ uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 0, effect = 0,  equalsize = 1,diff_censor=1)
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 2, n = 1000, censor = 0, effect = 0,  equalsize = 1,diff_censor=1)
+uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 0, effect = 0,  equalsize = 1,diff_censor=1)
 
 
 
@@ -501,7 +506,7 @@ uncensor_balance_500 <- home_time_table(B = 5000, n = 500, censor = 1, effect = 
 
 
 set.seed(123)
-uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, censor = 1, effect = 0,  equalsize = 1,diff_censor=0)
+uncensor_balance_1000 <- home_time_table(B = 2, n = 1000, censor = 1, effect = 0,  equalsize = 1,diff_censor=0)
 
 
 

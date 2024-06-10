@@ -73,12 +73,14 @@ home_time_regressions = function(home_time_data) {
     
     power <- c(0)
     param.est <- c(0)
+    se_model <- c(0)
     # analysis options
     ###############################################
     # t-test, linear regression
     m1 <- lm(outcome.t ~ group, data = home_time_data)
     co1 <- summary(m1)$coefficients[2, 1]
     p1 <- summary(m1)$coefficients[2, 4] < 0.05
+    se1 <- summary(m1)$coefficients[2, 2]
     ##################################################
     # COX MODEL - htevent 1: non-censored, htevent 0: censored
     
@@ -89,11 +91,13 @@ home_time_regressions = function(home_time_data) {
 
     co2new <- unname(m2.2$coefficients)
     p2new <- (summary(m2.2))$coef[5] < 0.05
+    se2 <- (summary(m2.2))$coef[3]
     ###############################################
     # median regression
     m3 <- rq(outcome.t ~ group, data = home_time_data)
     co3 <- summary(m3, se = "ker")[[3]][2, 1]
     p3 <- summary(m3, se = "ker")[[3]][2, 4] < 0.05
+    se3 <- summary(m3, se = "ker")[[3]][2, 2]
     ###############################################
     
     # negative binomial
@@ -101,7 +105,7 @@ home_time_regressions = function(home_time_data) {
     m4 <-summary(glm(outcome.t ~ group, family = negative.binomial(.3), data =  home_time_data))
     p4 <- m4$coefficients[2, 4] < 0.05
     co4 <- m4$coefficients[2, 1]
-    
+    se4 <- m4$coefficients[2,2]
     
     # Poisson
     # ROBUST VARIANCE IS EXTREMELY IMPORTANT
@@ -113,7 +117,7 @@ home_time_regressions = function(home_time_data) {
     robust_p <- 2 * pnorm(-abs(robust_z), 0, 1)
     p5 <- robust_p[2] < 0.05
     co5 <- m5$coef[2]
-    
+    se5 <- sand_se[2]
     
     ################################################
     # temporal process regression
@@ -156,11 +160,14 @@ home_time_regressions = function(home_time_data) {
     pval <- 1 - pchisq(diff ^ 2 / var.diff, df = 1)
     co6 <- diff
     p6 <- pval < 0.05
+    se6 <- sqrt(var.diff)
     ################################################
     #linear regression, cox, median, nb, possion, temporal process
     param.est <- c(co1,  co3, co5,co4, co2new, co6)
     names(param.est)=c("lr","median","poission","nb","cox","tp")
     power<- c(p1,  p3, p5, p4,p2new, p6)
     names(power)=c("lr","median","poission","nb","cox","tp")
-    return(list("param.est "=param.est ,"power"=power))
+    se_model <- c(se1,  se3, se5, se4, se2, se6)
+    names(se_model)=c("lr","median","poission","nb","cox","tp")
+    return(list("param.est "=param.est ,"power"=power,"se_model"=se_model))
 }
