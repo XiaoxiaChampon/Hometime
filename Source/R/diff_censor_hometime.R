@@ -46,23 +46,26 @@ run_parallel <- TRUE
 time_elapsed <- list()
 if(run_parallel)
 {
-    print("RUNNING PARALLEL")
-    
-    # For: makeCluster
-    library(doParallel)
-    
-    # For: %dorng% or registerDoRNG for reproducable parallel random number generation
-    library(doRNG)
-    
-    if(exists("initialized_parallel") && initialized_parallel == TRUE)
-    {
-        parallel::stopCluster(cl = my.cluster)
-    }
-    n.cores <- parallel::detectCores() - 1
-    my.cluster <- parallel::makeCluster(n.cores, type = "PSOCK")
-    doParallel::registerDoParallel(cl = my.cluster)
-    cat("Parellel Registered: ", foreach::getDoParRegistered(), "\n")
-    initialized_parallel <- TRUE
+  print("RUNNING PARALLEL")
+  
+  # For: makeCluster
+  library(doParallel)
+  
+  # For: %dorng% or registerDoRNG for reproducable parallel random number generation
+  library(doRNG)
+  
+  if(exists("initialized_parallel") && initialized_parallel == TRUE)
+  {
+    parallel::stopCluster(cl = my.cluster)
+  }
+  # n.cores <- parallel::detectCores()
+  n.cores <- options_numcpus
+  my.cluster <- parallel::makeCluster(n.cores, type = "PSOCK")
+  doParallel::registerDoParallel(cl = my.cluster)
+  cat("Parellel Registered: ", foreach::getDoParRegistered(), " (num cores=", n.cores, ")\n")
+  initialized_parallel <- TRUE
+  
+  # registerDoRNG(123) # ///<<<< THIS CREATES THE ERROR FOR FADPClust !!!
 }
 
 

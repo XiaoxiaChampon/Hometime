@@ -57,12 +57,12 @@ option_list <- list(
 parser <- OptionParser(option_list=option_list)
 options <- parse_args(parser)
 # 
-# options_jobid <- options$jobid
-# options_numcpus <- options$numcpus
+options_jobid <- options$jobid
+options_numcpus <- options$numcpus
 
 # 
- options_jobid <- 1
- options_numcpus <- 8
+ # options_jobid <- 1
+ # options_numcpus <- 8
 
 # 
 # # Use the options
@@ -120,7 +120,7 @@ ensure_dir_exist <- function(directory_path){
 # scenario_folder = "table_365_noextra"
 # ensure_dir_exist(scenario_folder)
 
-final_table_folder = paste0("365daysnew")
+final_table_folder = paste0("365daysfinal0")
 ensure_dir_exist(final_table_folder)
 
 ###########################################################
@@ -527,7 +527,7 @@ run_exp_set <- function(censor, effect,  equalsize, diff_censor, censorbig, opti
     
     begin_exp_set_time <- Sys.time()
     set.seed(123)
-    uncensor_balance_500 <- home_time_table(B = 5, n =500, 
+    uncensor_balance_500 <- home_time_table(B = 5000, n = 500, 
                                             censor = censor, 
                                             effect = effect,  
                                             equalsize = equalsize, 
@@ -535,7 +535,7 @@ run_exp_set <- function(censor, effect,  equalsize, diff_censor, censorbig, opti
                                             censorbig = censorbig,
                                             option_365 = option_365)
     set.seed(123)
-    uncensor_balance_1000 <- home_time_table(B = 5, n = 1000, 
+    uncensor_balance_1000 <- home_time_table(B = 5000, n = 1000, 
                                              censor = censor, 
                                              effect = effect,  
                                              equalsize = equalsize, 
@@ -543,7 +543,7 @@ run_exp_set <- function(censor, effect,  equalsize, diff_censor, censorbig, opti
                                              censorbig = censorbig,
                                              option_365 = option_365)
     set.seed(123)
-    uncensor_balance_5000 <- home_time_table(B = 5, n = 5000, 
+    uncensor_balance_5000 <- home_time_table(B = 5000, n = 5000, 
                                              censor = censor, 
                                              effect = effect,  
                                              equalsize = equalsize, 
@@ -559,18 +559,18 @@ run_exp_set <- function(censor, effect,  equalsize, diff_censor, censorbig, opti
     typeI_censor_balance=cbind(uncensor_balance_500, uncensor_balance_1000, uncensor_balance_5000)
     save(typeI_censor_balance,file=paste0(final_table_folder, "/",file_name,".RData"))
 }
-
-run_exp_set(0,0,1,1,1,0)
-run_exp_set(0,1,1,1,1,0)
-
-run_exp_set(0,0,0,1,1,0)
-run_exp_set(0,1,0,1,1,0)
-
-run_exp_set(1,0,1,0,1,0)
-run_exp_set(1,1,1,0,1,0)
-
-run_exp_set(1,0,0,0,1,0)
-run_exp_set(1,1,0,0,1,0)
+#run_exp_set <- function(censor, effect,  equalsize, diff_censor, censorbig, option_365)
+ run_exp_set(0,0,1,1,1,0)
+ run_exp_set(0,1,1,1,1,0)
+# # 
+ run_exp_set(0,0,0,1,1,0)
+ run_exp_set(0,1,0,1,1,0)
+# 
+ run_exp_set(1,0,1,0,1,0)
+ run_exp_set(1,1,1,0,1,0)
+# # 
+ run_exp_set(1,0,0,0,1,0)
+ run_exp_set(1,1,0,0,1,0)
 
 run_exp_set(1,0,1,1,1,0)
 run_exp_set(1,1,1,1,1,0)
